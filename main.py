@@ -16,6 +16,7 @@ class QueryRequest(BaseModel):
     language: str
 
 def fetch_transcript(video_id, language='en'):
+    video_id = video_id.strip().replace('!', '')
     try:
         transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=[language])
         transcript_text = ' '.join([t['text'] for t in transcript])
