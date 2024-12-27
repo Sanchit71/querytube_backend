@@ -26,13 +26,14 @@ class QueryRequest(BaseModel):
 
 def fetch_transcript(video_id, language='en'):
     cleaned_video_id = video_id.strip('!')  # Remove any '!' at the end of the ID
+    print(f"Fetching transcript for video_id: {cleaned_video_id}, language: {language}")
 
     try:
         transcript = YouTubeTranscriptApi.get_transcript(cleaned_video_id, languages=[language])
         transcript_text = ' '.join([t['text'] for t in transcript])
         return transcript_text
     except Exception as e:
-        print(f"Error fetching transcript: {e}")
+        print(f"Error fetching transcript for video ID {cleaned_video_id}: {e}")
         return None
 
 def get_gemini_response(context, query):
