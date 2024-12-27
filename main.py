@@ -16,9 +16,11 @@ class QueryRequest(BaseModel):
     language: str
 
 def fetch_transcript(video_id, language='en'):
-    video_id = video_id.strip().replace('!', '')
+    # Clean the video ID by removing any unexpected characters
+    cleaned_video_id = video_id.strip('!')  # Remove any '!' at the end of the ID
+
     try:
-        transcript = YouTubeTranscriptApi.get_transcript(video_id, languages=[language])
+        transcript = YouTubeTranscriptApi.get_transcript(cleaned_video_id, languages=[language])
         transcript_text = ' '.join([t['text'] for t in transcript])
         return transcript_text
     except Exception as e:
