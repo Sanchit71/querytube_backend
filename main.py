@@ -8,7 +8,7 @@ import google.generativeai as genai
 app = FastAPI()
 
 # Configure the Gemini API key
-genai.configure(api_key="AIzaSyB77OH3ryUNZBOGgvCYR8JGD4w6H7XvRtU")
+genai.configure(api_key="API_KEY")
 
 class QueryRequest(BaseModel):
     video_id: str
