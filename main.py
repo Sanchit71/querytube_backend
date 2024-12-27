@@ -2,10 +2,19 @@ from fastapi import FastAPI
 from pydantic import BaseModel
 from youtube_transcript_api import YouTubeTranscriptApi
 import google.generativeai as genai
-
+from fastapi.middleware.cors import CORSMiddleware
 
 # Initialize FastAPI app
 app = FastAPI()
+
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # Adjust according to your frontend's domain
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Configure the Gemini API key
 genai.configure(api_key="API_KEY")
@@ -16,7 +25,6 @@ class QueryRequest(BaseModel):
     language: str
 
 def fetch_transcript(video_id, language='en'):
-    # Clean the video ID by removing any unexpected characters
     cleaned_video_id = video_id.strip('!')  # Remove any '!' at the end of the ID
 
     try:
@@ -28,7 +36,6 @@ def fetch_transcript(video_id, language='en'):
         return None
 
 def get_gemini_response(context, query):
-    # Add instruction for concise response
     prompt = (
         f"Context: {context}\n\n"
         f"Query: {query}\n\n"
@@ -37,6 +44,10 @@ def get_gemini_response(context, query):
     model = genai.GenerativeModel("gemini-1.5-flash")
     response = model.generate_content(prompt)
     return response.text
+
+@app.get("/")
+async def root():
+    return {"message": "QueryTube backend is live!"}
 
 @app.post("/get_answer")
 async def get_answer(request: QueryRequest):
