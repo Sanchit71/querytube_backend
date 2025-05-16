@@ -1,0 +1,6 @@
+Fastapi
+youtube-transcript-api 
+nltk 
+fastapi[all]
+uvicorn
+google-generativeai
