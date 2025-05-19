@@ -34,8 +34,11 @@ def fetch_transcript(video_id, language='en'):
     print(f"Fetching transcript for video_id: {cleaned_video_id}, language: {language}")
 
     try:
-        transcript = YouTubeTranscriptApi.get_transcript(cleaned_video_id, languages=[language])
-        transcript_text = ' '.join([t['text'] for t in transcript])
+        # transcript = YouTubeTranscriptApi.get_transcript(cleaned_video_id, languages=[language])
+        # transcript_text = ' '.join([t['text'] for t in transcript])
+        transcript = YouTubeTranscriptApi().fetch(cleaned_video_id, languages=[language])
+        # Convert transcript to list of dictionaries and extract text
+        transcript_text = ' '.join([t.text for t in transcript])
         print("Transcript fetched successfully.")
         return transcript_text
     except Exception as e:
