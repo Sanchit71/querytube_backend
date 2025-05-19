@@ -1,11 +1,14 @@
 from fastapi import FastAPI
 from pydantic import BaseModel
 from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api.proxies import GenericProxyConfig
 import google.generativeai as genai
 from fastapi.middleware.cors import CORSMiddleware
 import re
 import traceback
 import os
+import time
+from requests.exceptions import ChunkedEncodingError, ConnectionError
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -29,22 +32,42 @@ class QueryRequest(BaseModel):
     language: str
 
 # Fetch transcript from YouTube
-def fetch_transcript(video_id, language='en'):
+def fetch_transcript(video_id, language='en', max_retries=3):
     cleaned_video_id = re.sub(r'[^a-zA-Z0-9_-]', '', video_id)
     print(f"Fetching transcript for video_id: {cleaned_video_id}, language: {language}")
 
-    try:
-        # transcript = YouTubeTranscriptApi.get_transcript(cleaned_video_id, languages=[language])
-        # transcript_text = ' '.join([t['text'] for t in transcript])
-        transcript = YouTubeTranscriptApi().fetch(cleaned_video_id, languages=[language])
-        # Convert transcript to list of dictionaries and extract text
-        transcript_text = ' '.join([t.text for t in transcript])
-        print("Transcript fetched successfully.")
-        return transcript_text
-    except Exception as e:
-        print(f"Error fetching transcript for video ID {cleaned_video_id}: {e}")
-        traceback.print_exc()
-        return None
+    for attempt in range(max_retries):
+        try:
+            # Try without proxy first
+            if attempt == 0:
+                transcript_api = YouTubeTranscriptApi()
+            else:
+                # Set up proxy configuration for retry attempts
+                proxy_config = GenericProxyConfig(
+                    http_url="http://117.250.3.58:8080",
+                    https_url="http://117.250.3.58:8080"
+                )
+                transcript_api = YouTubeTranscriptApi(proxy_config=proxy_config)
+            
+            # Fetch transcript
+            transcript = transcript_api.fetch(cleaned_video_id, languages=[language])
+            transcript_text = ' '.join([t.text for t in transcript])
+            print("Transcript fetched successfully.")
+            return transcript_text
+            
+        except (ChunkedEncodingError, ConnectionError) as e:
+            print(f"Attempt {attempt + 1} failed: {str(e)}")
+            if attempt < max_retries - 1:
+                print(f"Retrying in 2 seconds...")
+                time.sleep(2)
+            else:
+                print(f"All {max_retries} attempts failed")
+                traceback.print_exc()
+                return None
+        except Exception as e:
+            print(f"Error fetching transcript for video ID {cleaned_video_id}: {e}")
+            traceback.print_exc()
+            return None
 
 # Generate a Gemini response
 def get_gemini_response(context, query):
