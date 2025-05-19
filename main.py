@@ -7,22 +7,21 @@ import re
 import traceback
 import os
 
-
 # Initialize FastAPI app
 app = FastAPI()
 
 # Configure CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Adjust according to your frontend's domain
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 # Configure the Gemini API key
-# genai.configure(api_key="")  # Replace with your actual key
 genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
+
 # Define the request schema
 class QueryRequest(BaseModel):
     video_id: str
@@ -31,7 +30,6 @@ class QueryRequest(BaseModel):
 
 # Fetch transcript from YouTube
 def fetch_transcript(video_id, language='en'):
-    # Clean the video_id to ensure no unwanted characters
     cleaned_video_id = re.sub(r'[^a-zA-Z0-9_-]', '', video_id)
     print(f"Fetching transcript for video_id: {cleaned_video_id}, language: {language}")
 
@@ -64,17 +62,25 @@ async def root():
 # Main endpoint to handle query
 @app.post("/get_answer")
 async def get_answer(request: QueryRequest):
-    print("Received request:", request.dict())  # Debug incoming request
+    print("Received request:", request.dict())
 
     transcript_text = fetch_transcript(request.video_id, request.language)
     if transcript_text:
         answer = get_gemini_response(transcript_text, request.query)
-        return {"answer": answer}
-    return {"answer": "Failed to fetch transcript. Make sure the video has captions and the video_id is valid."}
+        return {
+            "answer": answer,
+            "video_id": request.video_id,
+            "youtube_url": f"https://www.youtube.com/watch?v={request.video_id}"
+        }
 
+    return {
+        "answer": "Failed to fetch transcript. Make sure the video has captions and the video_id is valid.",
+        "video_id": request.video_id,
+        "youtube_url": f"https://www.youtube.com/watch?v={request.video_id}"
+    }
+
+# Only used if you run `python main.py` locally
 if __name__ == "__main__":
     import uvicorn
-    import os
     port = int(os.environ.get("PORT", 8000))
     uvicorn.run("main:app", host="0.0.0.0", port=port)
-
