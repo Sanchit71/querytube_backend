@@ -69,3 +69,10 @@ async def get_answer(request: QueryRequest):
         answer = get_gemini_response(transcript_text, request.query)
         return {"answer": answer}
     return {"answer": "Failed to fetch transcript. Make sure the video has captions and the video_id is valid."}
+
+if __name__ == "__main__":
+    import uvicorn
+    import os
+    port = int(os.environ.get("PORT", 8000))
+    uvicorn.run("main:app", host="0.0.0.0", port=port)
+
