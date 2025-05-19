@@ -5,6 +5,8 @@ import google.generativeai as genai
 from fastapi.middleware.cors import CORSMiddleware
 import re
 import traceback
+import os
+
 
 # Initialize FastAPI app
 app = FastAPI()
@@ -19,8 +21,8 @@ app.add_middleware(
 )
 
 # Configure the Gemini API key
-genai.configure(api_key="AIzaSyB77OH3ryUNZBOGgvCYR8JGD4w6H7XvRtU")  # Replace with your actual key
-
+# genai.configure(api_key="")  # Replace with your actual key
+genai.configure(api_key=os.getenv("GEMINI_API_KEY"))
 # Define the request schema
 class QueryRequest(BaseModel):
     video_id: str
